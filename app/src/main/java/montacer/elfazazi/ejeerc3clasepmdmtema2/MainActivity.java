@@ -22,7 +22,6 @@ import montacer.elfazazi.ejeerc3clasepmdmtema2.modelos.Alumno;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    private ArrayList<Alumno> listaAlumnos;
     private AlumnosHelper helper;
     private Dao<Alumno, Integer> daoAlumno;
 
@@ -32,16 +31,10 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        listaAlumnos = new ArrayList<>();
         helper = new AlumnosHelper(this, Configuracion.BD_NAME, null, Configuracion.BD_VERSION);
 
         if (helper != null){
             daoAlumno = helper.getDaoAlumnos();
-            try {
-                listaAlumnos.addAll(daoAlumno.queryForAll());
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         actualizarNotaFinal();
@@ -81,16 +74,54 @@ public class MainActivity extends AppCompatActivity {
         binding.btnModificarMain.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                modificarAlumno();
             }
         });
 
         binding.btnEliminarMain.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                eliminarAlumno();
             }
         });
+    }
+
+    private void eliminarAlumno() {
+        if (binding.txtPosicionMain.getText().toString().isEmpty()){
+            Toast.makeText(this, "faltan datos", Toast.LENGTH_SHORT).show();
+        }else{
+            try {
+                daoAlumno.deleteById(Integer.parseInt(binding.txtPosicionMain.getText().toString()));//*****************************************************************IMPORTANTE****************
+                limpiar();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+
+    private void modificarAlumno() {
+        if (binding.txtPosicionMain.getText().toString().isEmpty()){
+            Toast.makeText(MainActivity.this, "falta el identificador", Toast.LENGTH_SHORT).show();
+        }else {
+            try {
+                Alumno a =  daoAlumno.queryForId(Integer.parseInt(binding.txtPosicionMain.getText().toString()));
+                if (a == null){
+                    Toast.makeText(MainActivity.this, "ese alumno no existe", Toast.LENGTH_SHORT).show();
+                }else{
+                   a.setNombre(binding.txtNombreMain.getText().toString());
+                   a.setApellidos(binding.txtApellidosMain.getText().toString());
+                   a.setNota1(Float.parseFloat(binding.txtNota1Main.getText().toString()));
+                   a.setNota2(Float.parseFloat(binding.txtNota2Main.getText().toString()));
+                   a.setNota3(Float.parseFloat(binding.txtNota3Main.getText().toString()));
+
+                   daoAlumno.update(a);//*****************************************************************IMPORTANTE**********************************
+                   limpiar();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void actualizarNotaFinal() {
@@ -139,9 +170,8 @@ public class MainActivity extends AppCompatActivity {
             a.setNota3(Float.parseFloat(binding.txtNota3Main.getText().toString()));
 
             try {
-                daoAlumno.create(a);
+                daoAlumno.create(a);  //*****************************************************************IMPORTANTE**********************************
                 a.setId(daoAlumno.extractId(a));
-                listaAlumnos.add(a);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -158,5 +188,6 @@ public class MainActivity extends AppCompatActivity {
         binding.txtNota2Main.setText("");
         binding.txtNota3Main.setText("");
         binding.lbNotaFinalMain.setText("nota final: ");
+        binding.txtPosicionMain.setText("");
     }
 }
